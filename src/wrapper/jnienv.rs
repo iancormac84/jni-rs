@@ -1754,7 +1754,7 @@ impl<'local> JNIEnv<'local> {
         let obj = null_check!(obj, "call_method obj argument")?;
 
         // parse the signature
-        let parsed = TypeSignature::from_str(sig.as_ref())?;
+        let parsed = TypeSignature::try_from(sig.as_ref())?;
         if parsed.args.len() != args.len() {
             return Err(Error::InvalidArgList(parsed));
         }
@@ -1809,7 +1809,7 @@ impl<'local> JNIEnv<'local> {
         // Runtime check that the 'local reference lifetime will be tied to
         // JNIEnv lifetime for the top JNI stack frame
         assert_eq!(self.level, JavaVM::thread_attach_guard_level());
-        let parsed = TypeSignature::from_str(&sig)?;
+        let parsed = TypeSignature::try_from(sig.as_ref())?;
         if parsed.args.len() != args.len() {
             return Err(Error::InvalidArgList(parsed));
         }
@@ -1871,7 +1871,7 @@ impl<'local> JNIEnv<'local> {
         let obj = obj.as_ref();
         let obj = null_check!(obj, "call_method obj argument")?;
 
-        let parsed = TypeSignature::from_str(&sig)?;
+        let parsed = TypeSignature::try_from(sig.as_ref())?;
         if parsed.args.len() != args.len() {
             return Err(Error::InvalidArgList(parsed));
         }
@@ -1919,7 +1919,7 @@ impl<'local> JNIEnv<'local> {
         // JNIEnv lifetime for the top JNI stack frame
         assert_eq!(self.level, JavaVM::thread_attach_guard_level());
         // parse the signature
-        let parsed = TypeSignature::from_str(&ctor_sig)?;
+        let parsed = TypeSignature::try_from(ctor_sig.as_ref())?;
 
         // check arguments length
         if parsed.args.len() != ctor_args.len() {
@@ -2973,7 +2973,7 @@ impl<'local> JNIEnv<'local> {
         T: Into<JNIString> + AsRef<str>,
     {
         let obj = obj.as_ref();
-        let field_ty = JavaType::from_str(ty.as_ref())?;
+        let field_ty = JavaType::try_from(ty.as_ref())?;
         let val_primitive = val.primitive_type();
 
         let wrong_type = Err(Error::WrongJValueType(val.type_name(), "see java field"));
@@ -3068,13 +3068,13 @@ impl<'local> JNIEnv<'local> {
         // Runtime check that the 'local reference lifetime will be tied to
         // JNIEnv lifetime for the top JNI stack frame
         assert_eq!(self.level, JavaVM::thread_attach_guard_level());
-        let ty = JavaType::from_str(sig.as_ref())?;
+        let ty = JavaType::try_from(sig.as_ref())?;
 
         // go ahead and look up the class sincewe'll need that for the next
         // call.
         let class = class.lookup(self)?;
 
-        self.get_static_field_unchecked(class.as_ref(), (class.as_ref(), field, sig), ty)
+        self.get_static_field_unchecked(class.as_ref(), &(class.as_ref(), field, sig), ty)
     }
 
     /// Set a static field. Requires a class lookup and a field id lookup internally.
